@@ -76,7 +76,9 @@ def parse_args():
                         help='the number of steps to run in each environment per policy rollout')
     parser.add_argument('--anneal-lr', type=lambda x:bool(strtobool(x)), default=True, nargs='?', const=True,
                         help="Toggle learning rate annealing for policy and value networks")
-    
+    parser.add_argument('--norm-adv', type=lambda x: bool(strtobool(x)), default=True, nargs='?', const=True,
+                        help='Toggles advantages normalization')
+
     args = parser.parse_args()
     args.batch_size = int(args.num_envs * args.num_steps)
     return args
