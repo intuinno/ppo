@@ -62,6 +62,8 @@ def parse_args():
                         help='total timesteps of the experiment')
     parser.add_argument('--torch-deterministic', type=lambda x:bool(strtobool(x)),default=True, nargs='?',
                         const=True, help='if toggled, `torch.backends.cudnn.deterministic=False`')
+    parser.add_argument('--capture-video', type=lambda x:bool(strtobool(x)), default=False, nargs='?', const=False,
+                        help="Record video")
     parser.add_argument('--cuda', type=lambda x:bool(strtobool(x)), default=True, nargs='?',
                         const=True, help='if toggled, cuda will not be enabled by default')
     parser.add_argument('--track', type=lambda x:bool(strtobool(x)), default=False, nargs='?', 
@@ -147,7 +149,7 @@ if __name__ == "__main__":
 
 
     
-    envs = gym.vector.SyncVectorEnv([make_env(args.gym_id, args.seed+i, i, True, run_name) 
+    envs = gym.vector.SyncVectorEnv([make_env(args.gym_id, args.seed+i, i, args.capture_video, run_name) 
                                      for i in range(args.num_envs)])
     assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
     print("envs.single_observation_space.shape: ", envs.single_observation_space.shape)
