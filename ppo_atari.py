@@ -70,7 +70,7 @@ def parse_args():
                         help='total timesteps of the experiment')
     parser.add_argument('--torch-deterministic', type=lambda x:bool(strtobool(x)),default=True, nargs='?',
                         const=True, help='if toggled, `torch.backends.cudnn.deterministic=False`')
-    parser.add_argument('--capture-video', type=lambda x:bool(strtobool(x)), default=False, nargs='?', const=False,
+    parser.add_argument('--capture-video', type=lambda x:bool(strtobool(x)), default=False, nargs='?', const=True,
                         help="Record video")
     parser.add_argument('--cuda', type=lambda x:bool(strtobool(x)), default=True, nargs='?',
                         const=True, help='if toggled, cuda will not be enabled by default')
@@ -121,7 +121,7 @@ def make_env(gym_id, seed, idx, capture_video, run_name):
         env = gym.wrappers.RecordEpisodeStatistics(env)
         if capture_video:
             if idx == 0:
-                env = gym.wrappers.RecordVideo(env, "videos")
+                env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
         
         env = NoopResetEnv(env, noop_max=30)
         env = MaxAndSkipEnv(env, skip=4)
