@@ -16,31 +16,31 @@ import gym
 class Agent(nn.Module):
     def __init__(self, envs):
         super(Agent, self).__init__()
-        self.network = nn.Sequential(
-            layer_init(nn.Conv2d(4,32, 8 , stride=4)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(32,64, 4, stride=2)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(64, 64, 3, stride=1)),
-            nn.ReLU(), 
-            nn.Flatten(), 
-            layer_init(nn.Linear(64 * 7 * 7, 512)),
-            nn.ReLU(),
+        self.critic = nn.Sequential(
+            layer_init(nn.Linear(np.array(envs.single_observation_space.shape).prod(), 64)),
+            nn.Tanh(),
+            layer_init(nn.Linear(64,64)),
+            nn.Tanh(),
+            layer_init(nn.Linear(64,1), std=1.)
         )
 
-        self.actor = layer_init(nn.Linear(512, envs.single_action_space.n), std=0.01)
-        self.critic = layer_init(nn.Linear(512, 1), std=1)
+        self.actor = nn.Sequential(
+            layer_init(nn.Linear(np.array(envs.single_observation_space.shape).prod(), 64)),
+            nn.Tanh(),
+            layer_init(nn.Linear(64,64)),
+            nn.Tanh(),
+            layer_init(nn.Linear(64,envs.single_action_space.n), std=0.01)
+        )
         
     def get_value(self, x):
-        return self.critic(self.network(x/255.0))
+        return self.critic(x)
 
     def get_action_and_value(self, x, action=None):
-        hidden = self.network(x/255.0)
-        logits = self.actor(hidden)
+        logits = self.actor(x)
         probs = Categorical(logits=logits)
         if action is None:
             action = probs.sample()
-        return action, probs.log_prob(action), probs.entropy(), self.critic(hidden) 
+        return action, probs.log_prob(action), probs.entropy(), self.critic(x) 
 
 
 def layer_init(layer, std=np.sqrt(2), bias_const=0):
@@ -90,7 +90,7 @@ def parse_args():
                         help='the number of minibatches')
     parser.add_argument('--update-epochs', type=int, default=4, 
                         help='the K epochs to update the policy') 
-    parser.add_argument('--clip-coef', type=float, default=0.1, 
+    parser.add_argument('--clip-coef', type=float, default=0.2, 
                         help='the surrogate clipping coefficient')
     parser.add_argument('--clip-vloss', type=lambda x: strtobool(x), default=True, nargs='?', const=True, 
                         help='Toggle whether or not to use a clipped loss for the value function, as per the paper')
@@ -114,17 +114,6 @@ def make_env(gym_id, seed, idx, capture_video, run_name):
         if capture_video:
             if idx == 0:
                 env = gym.wrappers.RecordVideo(env, "videos")
-        
-        env = NoopResetEnv(env, noop_max=30)
-        env = MaxAndSkipEnv(env, skip=4)
-        env = EpisodicLifeEnv(env)
-        if "FIRE" in env.unwrapped_get_action_meanings():
-            env = FireResetEnv(env)
-        env = ClipRewardEnv(env)
-        env = gymwrappers.ResizeObservation(env, (84,84))
-        env = gymwrappers.GrayScaleObservation(env)
-        env = gymwrappers.FrameStack(env)
-
         env.seed(seed)
         env.action_space.seed(seed)
         env.observation_space.seed(seed)
