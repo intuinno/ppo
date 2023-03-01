@@ -126,12 +126,12 @@ def make_env(gym_id, seed, idx, capture_video, run_name):
         env = NoopResetEnv(env, noop_max=30)
         env = MaxAndSkipEnv(env, skip=4)
         env = EpisodicLifeEnv(env)
-        if "FIRE" in env.unwrapped_get_action_meanings():
+        if "FIRE" in env.unwrapped.get_action_meanings():
             env = FireResetEnv(env)
         env = ClipRewardEnv(env)
-        env = gymwrappers.ResizeObservation(env, (84,84))
-        env = gymwrappers.GrayScaleObservation(env)
-        env = gymwrappers.FrameStack(env)
+        env = gym.wrappers.ResizeObservation(env, (84,84))
+        env = gym.wrappers.GrayScaleObservation(env)
+        env = gym.wrappers.FrameStack(env, 4)
 
 
         env.seed(seed)
